@@ -75,6 +75,7 @@ public class WebSecurityConfig {
                                 // .requestMatchers("/api/admin/**").permitAll()
                                 .requestMatchers("/api/test/**").permitAll()
                                 .requestMatchers("/images/**").permitAll()
+                                .requestMatchers("/error").permitAll()
                                 .anyRequest()).authenticated());
 
         http.authenticationProvider(authenticationProvider());
