@@ -85,3 +85,11 @@ java -jar target/sb-ecom-0.0.1-SNAPSHOT.jar
 - `CartController` — shopping cart operations
 - `OrderController` — order placement and management
 - `AddressController` — user address management
+
+## API Documentation
+
+The API documentation (Swagger UI) is available here:
+
+https://petstore.swagger.io/?url=https://raw.githubusercontent.com/avcna/E-commerce-with-Springboot/main/openapi.yaml#/
+
+The underlying OpenAPI specification is [`openapi.yaml`](openapi.yaml) in the project root. It is view-only: to try the endpoints, import the file into Postman and call `POST /api/auth/signin` first, since authentication uses the `springBootEcom` JWT cookie.
