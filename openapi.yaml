@@ -1,0 +1,980 @@
+openapi: 3.1.0
+info:
+  title: SB Ecom API
+  description: |
+    REST API for the e-commerce backend (categories, products, carts, addresses, orders, analytics).
+
+    **Authentication:** the JWT is stored in the `springBootEcom` cookie, not in an `Authorization` header. Call `POST /api/auth/signin` first; the browser keeps the cookie and Swagger UI then sends it with every "Try it out" request.
+  version: v1
+servers:
+- url: http://Ecom-app-env-1.eba-2vtjbpuc.eu-north-1.elasticbeanstalk.com
+  description: AWS Elastic Beanstalk (HTTP only)
+security:
+- cookieAuth: []
+tags:
+- name: Addresses
+  description: Shipping addresses
+- name: Cart
+  description: Shopping cart of the signed-in user
+- name: Authentication
+  description: Sign in, sign up, sign out, and current-user info
+- name: Orders
+  description: Checkout
+- name: Categories
+  description: Product category management
+- name: Analytics
+  description: Aggregate store statistics
+- name: Products
+  description: Product catalogue, search, and image upload
+paths:
+  /api/public/categories/{categoryId}:
+    put:
+      tags:
+      - Categories
+      summary: Update a category
+      operationId: updateCategory
+      parameters:
+      - name: categoryId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryDTO'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CategoryDTO'
+  /api/products/{productId}/image:
+    put:
+      tags:
+      - Products
+      summary: Upload a product image
+      description: Multipart upload; the file goes in the `image` part.
+      operationId: updateProductImage
+      parameters:
+      - name: productId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+              required:
+              - image
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ProductDTO'
+  /api/cart/products/{productId}/quantity/{operation}:
+    put:
+      tags:
+      - Cart
+      summary: Change a cart item's quantity
+      description: '`operation` = `delete` decreases the quantity by 1; any other value increases it by
+        1.'
+      operationId: updateCartProduct
+      parameters:
+      - name: productId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: operation
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CartDTO'
+  /api/admin/products/{productId}:
+    put:
+      tags:
+      - Products
+      summary: Update a product
+      operationId: updateProduct
+      parameters:
+      - name: productId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductDTO'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ProductDTO'
+    delete:
+      tags:
+      - Products
+      summary: Delete a product
+      operationId: deleteProduct
+      parameters:
+      - name: productId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ProductDTO'
+  /api/address/{id}:
+    get:
+      tags:
+      - Addresses
+      summary: Get an address by id
+      operationId: getAddressById
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/AddressDTO'
+    put:
+      tags:
+      - Addresses
+      summary: Update an address
+      operationId: updateAddress
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddressDTO'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/AddressDTO'
+    delete:
+      tags:
+      - Addresses
+      summary: Delete an address
+      operationId: deleteAddress
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+  /api/public/categories:
+    get:
+      tags:
+      - Categories
+      summary: List categories
+      description: Paginated and sortable list of all categories.
+      operationId: getAllCategories
+      parameters:
+      - name: pageNumber
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 10
+      - name: sortBy
+        in: query
+        required: false
+        schema:
+          type: string
+          default: categoryId
+      - name: sortOrder
+        in: query
+        required: false
+        schema:
+          type: string
+          default: asc
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CategoryResponse'
+    post:
+      tags:
+      - Categories
+      summary: Create a category
+      operationId: createCategory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryDTO'
+        required: true
+      responses:
+        '201':
+          description: Category created
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CategoryDTO'
+  /api/order/users/payments/{paymentMethod}:
+    post:
+      tags:
+      - Orders
+      summary: Place an order from the signed-in user's cart
+      description: '`paymentMethod` is the path segment; payment-gateway details go in the request body.'
+      operationId: orderProducts
+      parameters:
+      - name: paymentMethod
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequestDTO'
+        required: true
+      responses:
+        '201':
+          description: Order placed
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/OrderDTO'
+  /api/carts/products/{productId}/quantity/{quantity}:
+    post:
+      tags:
+      - Cart
+      summary: Add a product to the cart
+      operationId: addProductToCart
+      parameters:
+      - name: productId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: quantity
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        '201':
+          description: Product added
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CartDTO'
+  /api/auth/signup:
+    post:
+      tags:
+      - Authentication
+      summary: Sign up
+      description: Registers a new user. `roles` accepts `admin` and `seller`; anything else (or omitted)
+        results in the plain user role.
+      operationId: registerUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignUpRequest'
+        required: true
+      responses:
+        '200':
+          description: User registered
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Validation error, or username/email already taken
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+      security: []
+  /api/auth/signout:
+    post:
+      tags:
+      - Authentication
+      summary: Sign out
+      description: Clears the JWT cookie.
+      operationId: signoutUser
+      responses:
+        '200':
+          description: Signed out
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+      security: []
+  /api/auth/signin:
+    post:
+      tags:
+      - Authentication
+      summary: Sign in
+      description: Validates the credentials and returns the user info. The JWT is set in the response
+        cookie, which is then used to authenticate all other endpoints.
+      operationId: authenticateUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInfoRequest'
+        required: true
+      responses:
+        '200':
+          description: Signed in; JWT cookie set
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/UserInfoResponse'
+        '404':
+          description: Bad credentials
+      security: []
+  /api/admin/categories/{categoryId}/product:
+    post:
+      tags:
+      - Products
+      summary: Add a product to a category
+      operationId: addProduct
+      parameters:
+      - name: categoryId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductDTO'
+        required: true
+      responses:
+        '201':
+          description: Product created
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ProductDTO'
+  /api/addresses:
+    get:
+      tags:
+      - Addresses
+      summary: List all addresses
+      operationId: getAddress
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AddressDTO'
+    post:
+      tags:
+      - Addresses
+      summary: Create an address for the signed-in user
+      operationId: createAddress
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddressDTO'
+        required: true
+      responses:
+        '201':
+          description: Address created
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/AddressDTO'
+  /api/users/addresses:
+    get:
+      tags:
+      - Addresses
+      summary: List the signed-in user's addresses
+      operationId: getAddressByUser
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AddressDTO'
+  /api/public/products:
+    get:
+      tags:
+      - Products
+      summary: List products
+      description: Paginated and sortable list of all products.
+      operationId: getAllProducts
+      parameters:
+      - name: pageNumber
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 10
+      - name: sortBy
+        in: query
+        required: false
+        schema:
+          type: string
+          default: productId
+      - name: sortOrder
+        in: query
+        required: false
+        schema:
+          type: string
+          default: asc
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+  /api/public/products/keyword/{keyword}:
+    get:
+      tags:
+      - Products
+      summary: Search products by keyword
+      operationId: getProductsByKeyword
+      parameters:
+      - name: keyword
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: pageNumber
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 10
+      - name: sortBy
+        in: query
+        required: false
+        schema:
+          type: string
+          default: productId
+      - name: sortOrder
+        in: query
+        required: false
+        schema:
+          type: string
+          default: asc
+      responses:
+        '302':
+          description: Matching products (the API replies 302 Found rather than 200)
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+  /api/public/categories/{categoryId}/products:
+    get:
+      tags:
+      - Products
+      summary: List products in a category
+      operationId: getProductsByCategory
+      parameters:
+      - name: categoryId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: pageNumber
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      - name: pageSize
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 10
+      - name: sortBy
+        in: query
+        required: false
+        schema:
+          type: string
+          default: productId
+      - name: sortOrder
+        in: query
+        required: false
+        schema:
+          type: string
+          default: asc
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ProductResponse'
+  /api/carts:
+    get:
+      tags:
+      - Cart
+      summary: List all carts
+      operationId: getcarts
+      responses:
+        '302':
+          description: All carts (the API replies 302 Found rather than 200)
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CartDTO'
+  /api/carts/users/cart:
+    get:
+      tags:
+      - Cart
+      summary: Get the signed-in user's cart
+      operationId: getCartById
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CartDTO'
+  /api/auth/username:
+    get:
+      tags:
+      - Authentication
+      summary: Get current username
+      description: Returns the signed-in username, or `NULL` when not signed in.
+      operationId: currentUsername
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+  /api/auth/user:
+    get:
+      tags:
+      - Authentication
+      summary: Get current user details
+      operationId: getUserDetails
+      responses:
+        '200':
+          description: Current user
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/UserInfoResponse'
+        '401':
+          description: Not authenticated
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+  /api/admin/app/analytics:
+    get:
+      tags:
+      - Analytics
+      summary: Get product count, total orders, and total revenue
+      operationId: getAnalytics
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/AnalyticsResponse'
+  /api/carts/{cartId}/product/{productId}:
+    delete:
+      tags:
+      - Cart
+      summary: Remove a product from a cart
+      operationId: deleteProductFromCart
+      parameters:
+      - name: cartId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: productId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+  /api/admin/categories/{categoryId}:
+    delete:
+      tags:
+      - Categories
+      summary: Delete a category
+      operationId: deleteCategory
+      parameters:
+      - name: categoryId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CategoryDTO'
+components:
+  schemas:
+    CategoryDTO:
+      type: object
+      properties:
+        categoryId:
+          type: integer
+          format: int64
+        categoryName:
+          type: string
+    ProductDTO:
+      type: object
+      properties:
+        productId:
+          type: integer
+          format: int64
+        productName:
+          type: string
+        description:
+          type: string
+        image:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+        price:
+          type: number
+          format: double
+        specialprice:
+          type: number
+          format: double
+        discount:
+          type: number
+          format: double
+    CartDTO:
+      type: object
+      properties:
+        cartId:
+          type: integer
+          format: int64
+        totalPrice:
+          type: number
+          format: double
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductDTO'
+    AddressDTO:
+      type: object
+      properties:
+        addressId:
+          type: integer
+          format: int64
+        street:
+          type: string
+        buildingName:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        country:
+          type: string
+        pincode:
+          type: string
+    OrderRequestDTO:
+      type: object
+      properties:
+        addressId:
+          type: integer
+          format: int64
+        paymentMethod:
+          type: string
+        pgName:
+          type: string
+        pgPaymentId:
+          type: string
+        pgStatus:
+          type: string
+        pgResponseMessage:
+          type: string
+    OrderDTO:
+      type: object
+      properties:
+        orderId:
+          type: integer
+          format: int64
+        email:
+          type: string
+        orderItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemDTO'
+        orderDate:
+          type: string
+          format: date-time
+        payment:
+          $ref: '#/components/schemas/PaymentDTO'
+        totalAmount:
+          type: number
+          format: double
+        orderStatus:
+          type: string
+        addressId:
+          type: integer
+          format: int64
+    OrderItemDTO:
+      type: object
+      properties:
+        orderItemId:
+          type: integer
+          format: int64
+        product:
+          $ref: '#/components/schemas/ProductDTO'
+        quantity:
+          type: integer
+          format: int32
+        discount:
+          type: number
+          format: double
+        orderedProductPrice:
+          type: number
+          format: double
+    PaymentDTO:
+      type: object
+      properties:
+        paymentId:
+          type: integer
+          format: int64
+        paymentMethod:
+          type: string
+        pgPaymentId:
+          type: string
+        pgStatus:
+          type: string
+        pgResponseMessage:
+          type: string
+        pgName:
+          type: string
+    SignUpRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          maxLength: 20
+          minLength: 3
+        email:
+          type: string
+          format: email
+          maxLength: 50
+          minLength: 3
+        roles:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        password:
+          type: string
+          maxLength: 40
+          minLength: 6
+      required:
+      - email
+      - password
+      - username
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+    UserInfoRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          minLength: 1
+      required:
+      - password
+      - username
+    UserInfoResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        jwtToken:
+          type: string
+        username:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+    ProductResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductDTO'
+        pageNumber:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        lastpage:
+          type: boolean
+    CategoryResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryDTO'
+        pageNumber:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        lastpage:
+          type: boolean
+    AnalyticsResponse:
+      type: object
+      properties:
+        productCount:
+          type: string
+        totalRevenue:
+          type: string
+        totalOrders:
+          type: string
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      description: JWT issued by `POST /api/auth/signin` as an HTTP cookie. Browsers do not let Swagger
+        UI set cookies manually, so sign in via the endpoint instead.
+      name: springBootEcom
+      in: cookie
