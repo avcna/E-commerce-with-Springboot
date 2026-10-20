@@ -26,6 +26,7 @@ The app reads its datasource credentials from environment variables. Set these b
 | `DB_URL`      | JDBC URL, e.g. `jdbc:postgresql://localhost:5432/ecommerce` |
 | `DB_USERNAME` | Database username                     |
 | `DB_PASSWORD` | Database password                     |
+| `STRIPE_SECRET_KEY` | Stripe secret key (optional; only needed for `POST /api/order/stripe-client-secret`) |
 
 Other notable settings in `src/main/resources/application.properties`:
 
@@ -86,10 +87,25 @@ java -jar target/sb-ecom-0.0.1-SNAPSHOT.jar
 - `OrderController` — order placement and management
 - `AddressController` — user address management
 
+## Paying with Stripe (Test Mode)
+
+Card payments go through Stripe in test mode, so no real money is charged. When the payment form asks for card details, fill it in like this:
+
+| Field         | Value                                                  |
+|---------------|--------------------------------------------------------|
+| Card number   | `4242 4242 4242 4242`                                  |
+| Expiration    | any date in the future, e.g. `12 / 34`                 |
+| Security code | any digits, e.g. `123`                                 |
+| Country       | anything                                               |
+
+The backend needs the `STRIPE_SECRET_KEY` environment variable (a `sk_test_...` key from the Stripe sandbox dashboard) for `POST /api/order/stripe-client-secret` to work.
+
 ## API Documentation
 
-The API documentation (Swagger UI) is available here:
+The API documentation (Swagger UI) is available here, and you can try the endpoints directly from it:
 
-https://petstore.swagger.io/?url=https://raw.githubusercontent.com/avcna/E-commerce-with-Springboot/main/openapi.yaml#/
+http://ecom-app-env-1.eba-2vtjbpuc.eu-north-1.elasticbeanstalk.com/swagger-ui/index.html#
 
-The underlying OpenAPI specification is [`openapi.yaml`](openapi.yaml) in the project root. It is view-only: to try the endpoints, import the file into Postman and call `POST /api/auth/signin` first, since authentication uses the `springBootEcom` JWT cookie.
+Authentication uses the `springBootEcom` JWT cookie, so call `POST /api/auth/signin` first; the browser then sends the cookie with every following request. Open the link over `http://` (the deployment has no HTTPS).
+
+When running locally, Swagger UI is at `http://localhost:5000/swagger-ui/index.html`. A static copy of the OpenAPI specification is also kept in [`openapi.yaml`](openapi.yaml) for importing into tools such as Postman.
