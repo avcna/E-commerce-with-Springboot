@@ -46,10 +46,27 @@ public class OrderController {
         return new ResponseEntity<OrderResponse>(orderResponse, HttpStatus.OK);
     }
 
+    @GetMapping("/seller/orders")
+    public ResponseEntity<OrderResponse> getAllSellerOrders(@RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER) Integer pageNumber,
+                                                            @RequestParam(name = "pageSize", defaultValue = AppConstants.PAGE_SIZE) Integer pageSize,
+                                                            @RequestParam(name = "sortBy", defaultValue = AppConstants.SORT_ORDERS_BY) String sortBy,
+                                                            @RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_DIR) String sortOrder) {
+        OrderResponse orderResponse = orderService.getAllSellerOrders(pageNumber, pageSize, sortBy, sortOrder);
+        return new ResponseEntity<OrderResponse>(orderResponse, HttpStatus.OK);
+    }
+
     @PutMapping("/admin/orders/{orderId}/status")
     public ResponseEntity<OrderDTO> updateOrderStatus(@PathVariable Long orderId,
                                                       @RequestBody OrderStatusUpdateDTO orderStatusUpdateDto,
                                                       Authentication authentication) {
+        OrderDTO orderDTO = orderService.updateOrder(orderId, orderStatusUpdateDto.getStatus());
+        return new ResponseEntity<OrderDTO>(orderDTO, HttpStatus.OK);
+    }
+
+    @PutMapping("/seller/orders/{orderId}/status")
+    public ResponseEntity<OrderDTO> updateOrderStatusSeller(@PathVariable Long orderId,
+                                                            @RequestBody OrderStatusUpdateDTO orderStatusUpdateDto,
+                                                            Authentication authentication) {
         OrderDTO orderDTO = orderService.updateOrder(orderId, orderStatusUpdateDto.getStatus());
         return new ResponseEntity<OrderDTO>(orderDTO, HttpStatus.OK);
     }

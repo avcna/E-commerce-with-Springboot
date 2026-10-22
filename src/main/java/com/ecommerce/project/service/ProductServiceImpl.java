@@ -5,12 +5,14 @@ import com.ecommerce.project.exceptions.ResourceNotFoundException;
 import com.ecommerce.project.model.Cart;
 import com.ecommerce.project.model.Category;
 import com.ecommerce.project.model.Product;
+import com.ecommerce.project.model.User;
 import com.ecommerce.project.payload.CartDTO;
 import com.ecommerce.project.payload.ProductDTO;
 import com.ecommerce.project.payload.ProductResponse;
 import com.ecommerce.project.repositories.CartRepository;
 import com.ecommerce.project.repositories.CategoryRepository;
 import com.ecommerce.project.repositories.ProductRepository;
+import com.ecommerce.project.util.AuthUtil;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,6 +48,9 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     CartService cartService;
 
+    @Autowired
+    AuthUtil authUtil;
+
     @Value("${project.image}")
     private String path;
 
@@ -59,6 +64,7 @@ public class ProductServiceImpl implements ProductService {
         }
         product.setImage("default.png");
         product.setCategory(category);
+        product.setUser(authUtil.loggedInUser());
         double specialPrice = product.getPrice() - (product.getPrice() * product.getDiscount() / 100);
         product.setSpecialPrice(specialPrice);
         Product savedProduct = productRepository.save(product);
@@ -194,6 +200,37 @@ public class ProductServiceImpl implements ProductService {
         Product updatedproduct = productRepository.save(productFromDb);
         return modelMapper.map(updatedproduct, ProductDTO.class);
 
+    }
+
+    @Override
+    public ProductResponse getAllProductsForSeller(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+        Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+        Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
+        User user = authUtil.loggedInUser();
+        Page<Product> productPage = productRepository.findByUser(user, pageDetails);
+
+        List<Product> products = productPage.getContent();
+        if (products.isEmpty()) {
+            throw new APIException("No Product created");
+        }
+        List<ProductDTO> productDTOS = products.stream()
+                .map(product -> modelMapper.map(product, ProductDTO.class))
+                .toList();
+        ProductResponse productResponse = new ProductResponse();
+        productResponse.setContent(productDTOS);
+        productResponse.setPageNumber(productPage.getNumber());
+        productResponse.setPageSize(productPage.getSize());
+        productResponse.setTotalElements(productPage.getTotalElements());
+        productResponse.setTotalPages(productPage.getTotalPages());
+        productResponse.setLastpage(productPage.isLast());
+        return productResponse;
+    }
+
+    @Override
+    public ProductDTO addProductSeller(Long categoryId, ProductDTO productDTO) {
+        return addProduct(categoryId, productDTO);
     }
 
 
